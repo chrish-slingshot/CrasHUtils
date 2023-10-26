@@ -16,4 +16,4 @@ Should be fairly simple to use - simply plug in an image to the input.
 
 ## Examples
 
-![ComfyUI_temp_cknmh_000082_](https://github.com/chrish-slingshot/ComfyUI-ImageGlitcher/assets/117188274/fff5d97a-7fec-4af2-bc41-b193e956ffd3)
+![ComfyUI_temp_cknmh_000362_](https://github.com/chrish-slingshot/ComfyUI-ImageGlitcher/assets/117188274/386ed082-d551-4520-ab9e-2c8fd4063f81)
