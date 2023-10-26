@@ -4,6 +4,8 @@ import numpy as np
 from torchvision.transforms.functional import to_tensor
 
 class ColorStylizer:
+    NAME = "Color Stylizer"
+    
     def __init__(self):
         pass
 
@@ -51,9 +53,10 @@ class ColorStylizer:
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "stylize"
     OUTPUT_NODE = False
-    CATEGORY = "Effects"
+    CATEGORY = "CrasH Utils/Effects"
 
     def stylize(self, image, target_r, target_g, target_b, falloff, gain):
         target_color = (target_b, target_g, target_r)
@@ -88,13 +91,3 @@ class ColorStylizer:
         mask = mask / 255.0
         mask = mask.reshape(*mask.shape, 1)
         return mask
-
-# Append to the NODE_CLASS_MAPPINGS dictionary
-NODE_CLASS_MAPPINGS = {
-    "ColorStylizer": ColorStylizer
-}
-
-# A dictionary that contains the friendly/humanly readable titles for the nodes
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "ColorStylizer": "Color Stylizer"
-}

@@ -2,6 +2,8 @@ import requests
 import json
 
 class QueryLocalLLM:
+    NAME = "Query Local LLM"
+    
     def __init__(self):
         pass
 
@@ -20,7 +22,7 @@ class QueryLocalLLM:
     RETURN_NAMES = ("generated_text",)
     FUNCTION = "generateText"
     OUTPUT_NODE = False
-    CATEGORY = "Effects"
+    CATEGORY = "CrasH Utils/LLM"
 
     def generateText(self, prompt, url, context_length, seed):
         description = self.call_api(prompt, url, context_length, seed)
@@ -64,13 +66,3 @@ class QueryLocalLLM:
         else:
             print(f"Error {response.status_code}: {response.text}")
             return None
-
-# Append to the NODE_CLASS_MAPPINGS dictionary
-NODE_CLASS_MAPPINGS = {
-    "QueryLocalLLM": QueryLocalLLM
-}
-
-# A dictionary that contains the friendly/humanly readable titles for the nodes
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "QueryLocalLLM": "Query Local LLM"
-}

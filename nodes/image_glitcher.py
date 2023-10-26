@@ -4,9 +4,7 @@ from torchvision.transforms.functional import to_pil_image, to_tensor
 from PIL import ImageEnhance, Image, ImageChops
 
 class ImageGlitcher:
-    """
-    Apply a glitch effect on the input image.
-    """
+    NAME = "Image Glitcher"
 
     def __init__(self):
         pass
@@ -39,9 +37,10 @@ class ImageGlitcher:
         }
 
     RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("iamge",)
     FUNCTION = "applyGlitch"
     OUTPUT_NODE = False
-    CATEGORY = "Effects"
+    CATEGORY = "CrasH Utils/Effects"
 
     def applyGlitch(self, image, glitchiness, brightness, scanlines, seed):
         # Since the glitchImage method isn't provided, 
@@ -154,13 +153,3 @@ class ImageGlitcher:
             raise ValueError("Invalid channel. Choose from 'R', 'G', or 'B'.")
 
         return result
-
-# Append to the NODE_CLASS_MAPPINGS dictionary
-NODE_CLASS_MAPPINGS = {
-    "ImageGlitcher": ImageGlitcher
-}
-
-# A dictionary that contains the friendly/humanly readable titles for the nodes
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageGlitcher": "Image Glitcher"
-}

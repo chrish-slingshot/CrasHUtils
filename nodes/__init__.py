@@ -1,11 +1,14 @@
 from .image_glitcher import ImageGlitcher
 from .color_stylizer import ColorStylizer
 from .local_llm import QueryLocalLLM
+from .sdxl_resolution import SdxlResolution, SdxlResolutionToDimensions
 
 NODE_CLASS_MAPPINGS = {
-    "ImageGlitcher": ImageGlitcher,
-    "ColorStylizer": ColorStylizer,
-    "QueryLocalLLM": QueryLocalLLM,
+    ImageGlitcher.NAME: ImageGlitcher,
+    ColorStylizer.NAME: ColorStylizer,
+    QueryLocalLLM.NAME: QueryLocalLLM,
+    SdxlResolution.NAME: SdxlResolution,
+    SdxlResolutionToDimensions.NAME: SdxlResolutionToDimensions,
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -13,6 +16,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageGlitcher": "Image Glitcher",
     "ColorStylizer": "Color Stylizer",
     "QueryLocalLLM": "Query Local LLM",
+    "SdxlResolution": "SDXL Resolution",
+    "SdxlResolutionToDimensions": "SDXL Resolution To Dimensions",
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
