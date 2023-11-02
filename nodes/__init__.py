@@ -1,7 +1,8 @@
 from .image_glitcher import ImageGlitcher
 from .color_stylizer import ColorStylizer
-from .local_llm import QueryLocalLLM
+from .local_llm import QueryLocalLLM, ExtractCharacterInfo
 from .sdxl_resolution import SdxlResolution, SdxlResolutionToDimensions
+from .checkpoint_names import CheckpointNames
 
 NODE_CLASS_MAPPINGS = {
     ImageGlitcher.NAME: ImageGlitcher,
@@ -9,6 +10,8 @@ NODE_CLASS_MAPPINGS = {
     QueryLocalLLM.NAME: QueryLocalLLM,
     SdxlResolution.NAME: SdxlResolution,
     SdxlResolutionToDimensions.NAME: SdxlResolutionToDimensions,
+    CheckpointNames.NAME: CheckpointNames,
+    ExtractCharacterInfo.NAME: ExtractCharacterInfo,
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -18,6 +21,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "QueryLocalLLM": "Query Local LLM",
     "SdxlResolution": "SDXL Resolution",
     "SdxlResolutionToDimensions": "SDXL Resolution To Dimensions",
+    "CheckPointNames": "Checkpoint Names",
+    "ExtractCharacterInfo": "Extract Character Info"
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]

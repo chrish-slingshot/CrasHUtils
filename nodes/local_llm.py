@@ -1,5 +1,8 @@
 import requests
 import json
+from PIL import Image
+import base64
+import re
 
 class QueryLocalLLM:
     NAME = "Query Local LLM"
@@ -66,3 +69,42 @@ class QueryLocalLLM:
         else:
             print(f"Error {response.status_code}: {response.text}")
             return None
+
+class ExtractCharacterInfo:
+    NAME = "Extract Character Information"
+    
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "path": ("STRING", { "multiline": False, "default": "" }),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("character_data",)
+    FUNCTION = "parse_png_text"
+    OUTPUT_NODE = False
+    CATEGORY = "CrasH Utils/LLM"
+    
+    def parse_png_text(self, path):
+        # Open the image file
+        with Image.open(path) as img:
+            # PNG images can have multiple text chunks, get them all
+            text_chunks = [chunk for chunk in img.text.values()]
+
+            # If there are no text chunks, raise an error
+            if not text_chunks:
+                raise ValueError('No text data found in PNG image.')
+
+            # Decode the first text chunk from base64 to utf-8
+            try:
+                # This assumes the text is base64-encoded as in the JS example
+                decoded_text = base64.b64decode(text_chunks[0]).decode('utf-8')
+                print(decoded_text)
+                return decoded_text
+            except Exception as e:
+                raise ValueError('Could not decode the text chunk.') from e
