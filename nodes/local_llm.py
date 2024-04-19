@@ -15,8 +15,9 @@ class QueryLocalLLM:
         return {
             "required": {
                 "prompt": ("STRING", { "multiline": True, "default": "" }),
-                "url": ("STRING", { "multiline": False, "default": "http://127.0.0.1:5000/api/v1/generate" }),
-                "context_length": ("INT", { "default": 2048, "min": 512, "max": 4096, "display": "slider" }),
+                "system_message": ("STRING", { "multiline": True, "default": "You are an assistant designed to create more imaginative and beautiful images by expanding on the image prompt a user gives you. Respond only with your expanded prompt text. Here is the user's prompt:" }),
+                "url": ("STRING", { "multiline": False, "default": "http://127.0.0.1:5000/v1/chat/completions" }),
+                "context_length": ("INT", { "default": 2048, "min": 512, "max": 8192, "display": "slider" }),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff})
             },
         }
@@ -27,14 +28,14 @@ class QueryLocalLLM:
     OUTPUT_NODE = False
     CATEGORY = "CrasH Utils/LLM"
 
-    def generateText(self, prompt, url, context_length, seed):
-        description = self.call_api(prompt, url, context_length, seed)
+    def generateText(self, prompt, system_message, url, context_length, seed):
+        description = self.call_api(prompt, system_message, url, context_length, seed)
         return (description,)
 
-    def call_api(self, prompt_text, url, context_length, seed):
+    def call_api(self, prompt_text, system_message, url, context_length, seed):
         payload = {
             "messages": [
-            { "role": "system", "content": "You are an assistant designed to create more imaginative and beautiful images by expanding on the image prompt a user gives you. Respond only with your expanded prompt text. Here is the user's prompt:" },
+            { "role": "system", "content": f"{system_message}\n" },
             { "role": "user", "content": f"{prompt_text}\n" }],
             "max_tokens": 300,
             "temperature": 0.7,
