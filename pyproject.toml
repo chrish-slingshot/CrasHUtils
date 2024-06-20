@@ -9,6 +9,6 @@ Repository = "https://github.com/chrish-slingshot/CrasHUtils"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "crash"
 DisplayName = "CrasHUtils"
 Icon = ""
