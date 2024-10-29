@@ -24,7 +24,7 @@ This node allows you to pick a single color in the image and greyscale everythin
 
 ## Query Local LLM
 
-Send a query to the [oobabooga](https://github.com/oobabooga/text-generation-webui) API which runs local LLMs, and then outputs the response. Make sure you've enabled the API option in your oobabooga session.
+Send a query to an OpenAI compatible API (including local LLMs), and then outputs the response. Make sure you've enabled the API option in your oobabooga session.
 
 ![image](https://github.com/chrish-slingshot/CrasHUtils/assets/117188274/c7070ce1-9823-48ba-ac13-135c5449b74a)
 
