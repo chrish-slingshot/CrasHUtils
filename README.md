@@ -84,6 +84,8 @@ Visual multi-LoRA loader with a thumbnail grid browser, selected-LoRA panel, and
 | **Selected** | Single-click enable/disable, double-click remove, ⚙ for strength |
 | **Trigger Tags** | Toggle which tags are sent to the `triggers` output |
 
+**SFW toggle:** When enabled, any folder named `NSFW` (case-insensitive) is hidden from browse and search — at any depth in your LoRA library. Turn it off to show those folders again.
+
 **Thumbnails:** place `{lora_name}.png` next to each `.safetensors` file. Right-click a **Preview Image** → **Save as LoRA thumbnail** to save from a generated image (overwrites existing).
 
 **Trigger words:** companion `.txt` file beside the LoRA (same base name). One per line or comma-separated.
@@ -175,7 +177,7 @@ Authentic glitch art with chromatic aberration and CRT scanlines. Based on the H
 
 ### Color Stylizer
 
-Pick one color to preserve; everything else is desaturated. Good for *Sin City* / *Schindler's List* style isolation.
+Pick one color to preserve; everything else is desaturated.
 
 ![Color Stylizer before/after](https://github.com/chrish-slingshot/CrasHUtils/assets/117188274/828fe8f6-c225-490d-be60-820cfc73d1dd) ![Color Stylizer example](https://github.com/chrish-slingshot/CrasHUtils/assets/117188274/7faea8aa-b931-46f3-86b8-7b17432ad46e)
 
@@ -227,11 +229,15 @@ Classic Nokia-style snake. Arrow keys or WASD; Space to pause/restart.
 
 Arrow Left/Right move, Down soft drop, Up rotate, Space hard drop. Score, levels, next-piece preview.
 
+![Tetris](docs/images/tetris.png)
+
 ---
 
 ### 🦖 Dino Game
 
 Chrome offline runner. Space or Up to jump. Increasing difficulty and high score.
+
+![Dino Game](docs/images/dino-game.png)
 
 ---
 
@@ -239,11 +245,15 @@ Chrome offline runner. Space or Up to jump. Increasing difficulty and high score
 
 Arrow keys move, Space shoots. Wave-based arcade action.
 
+![Space Invaders](docs/images/space-invaders.png)
+
 ---
 
 ### 🔫 DOOM
 
 Full DOOM Shareware v1.9 in the browser via js-dos.
+
+![DOOM](docs/images/doom.png)
 
 **Automatic setup (recommended):** add the node — it downloads ~2MB on first run from several mirrors, then launches.
 
