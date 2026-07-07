@@ -86,7 +86,7 @@ Visual multi-LoRA loader with a thumbnail grid browser, selected-LoRA panel, and
 
 **SFW toggle:** When enabled, any folder named `NSFW` (case-insensitive) is hidden from browse and search — at any depth in your LoRA library. Turn it off to show those folders again.
 
-**Thumbnails:** place `{lora_name}.png` next to each `.safetensors` file. Right-click a **Preview Image** → **Save as LoRA thumbnail** to save from a generated image (overwrites existing).
+**Thumbnails:** place an image next to each `.safetensors` file using the same base name — `.png`, `.webp`, `.jpg`, or `.jpeg` (`.png` is preferred when multiple exist). Right-click a **Preview Image** → **Save as LoRA thumbnail** to save from a generated image (saved as `.png`, overwrites existing).
 
 **Trigger words:** companion `.txt` file beside the LoRA (same base name). One per line or comma-separated.
 

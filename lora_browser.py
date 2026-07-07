@@ -10,12 +10,12 @@ import folder_paths
 from .lora_info_service import get_lora_info
 from .nodes.lora_utils import (
     _resolve_lora_full_path,
+    find_lora_preview_path,
     get_lora_triggers,
     lora_has_preview,
     normalize_lora_path,
 )
 
-IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 NSFW_FOLDER_NAME = "nsfw"
 
 
@@ -237,15 +237,7 @@ def _search_loras(relative_path: str, query: str, sfw: bool = True) -> list[dict
 
 def _find_preview_image(lora_relative_path: str) -> str | None:
     full_path = _resolve_lora_path(lora_relative_path)
-    if full_path is None:
-        return None
-
-    base, _ = os.path.splitext(full_path)
-    for ext in IMAGE_EXTENSIONS:
-        candidate = f"{base}{ext}"
-        if os.path.isfile(candidate):
-            return candidate
-    return None
+    return find_lora_preview_path(full_path)
 
 
 def _preview_cache_headers(source_path: str) -> dict[str, str]:

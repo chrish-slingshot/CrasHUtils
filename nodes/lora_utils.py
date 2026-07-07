@@ -219,13 +219,25 @@ def get_lora_by_filename(file_path: str, lora_paths=None) -> str | None:
     return None
 
 
+LORA_PREVIEW_EXTENSIONS = (".png", ".webp", ".jpg", ".jpeg", ".gif", ".bmp")
+
+
+def find_lora_preview_path(full_path: str | None) -> str | None:
+    if not full_path:
+        return None
+
+    base, _ = os.path.splitext(full_path)
+    for ext in LORA_PREVIEW_EXTENSIONS:
+        candidate = f"{base}{ext}"
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
 def lora_has_preview(lora_relative_path: str, *, full_path: str | None = None) -> bool:
     if full_path is None:
         full_path = _resolve_lora_full_path(lora_relative_path)
-    if full_path is None:
-        return False
-    base, _ = os.path.splitext(full_path)
-    return os.path.isfile(f"{base}.png")
+    return find_lora_preview_path(full_path) is not None
 
 
 def get_lora_triggers(lora_relative_path: str = "", *, full_path: str | None = None) -> list[str]:
