@@ -1,5 +1,8 @@
 import requests
 import json
+import ipaddress
+import socket
+from urllib.parse import urlparse
 from PIL import Image
 import base64
 import re
@@ -43,8 +46,19 @@ class QueryLocalLLM:
             "seed": seed
         }
         
+        # Block requests to cloud metadata endpoints / link-local addresses to prevent SSRF
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https"):
+            raise ValueError(f"Unsupported URL scheme: {parsed_url.scheme}")
+        try:
+            resolved_ip = ipaddress.ip_address(socket.gethostbyname(parsed_url.hostname))
+        except (socket.gaierror, ValueError) as e:
+            raise ValueError(f"Could not resolve host: {parsed_url.hostname}") from e
+        if resolved_ip.is_link_local or resolved_ip.is_multicast or resolved_ip.is_reserved:
+            raise ValueError(f"Refusing to contact blocked address: {resolved_ip}")
+
         # Sending the POST request
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=30)
         
         # Checking for successful response
         if response.status_code == 200:
