@@ -1,6 +1,16 @@
 import { app } from "../../scripts/app.js";
-import { bindLoraContextMenu, fetchLoraTriggers } from "./lora_info.js";
+import { bindLoraContextMenu, fetchLoraTriggerVariants } from "./lora_info.js";
 import { bindPreviewImage, replaceWithPreviewPlaceholder } from "./lora_preview_cache.js";
+import {
+    createEmptyTriggerEntry,
+    entryTriggerStates,
+    entryVariantStates,
+    formatEnabledTriggers,
+    initEntryTriggers,
+    loadEntryTriggerData,
+    LoraEntrySettingsDialog,
+    restoreTriggerEntryFromWidget,
+} from "./lora_loader_settings.js";
 
 const NODE_NAME = "GridLoraLoader";
 const API_BASE = "/crashutils/loras";
@@ -530,28 +540,6 @@ function trimNsfwBrowsePath(path) {
     return parts.slice(0, nsfwIndex).join("/");
 }
 
-function initEntryTriggers(entry, triggers) {
-    entry.triggers = [...(triggers || [])];
-    entry.triggerOn = entry.triggerOn || {};
-    for (const word of entry.triggers) {
-        if (entry.triggerOn[word] === undefined) {
-            entry.triggerOn[word] = true;
-        }
-    }
-    for (const word of Object.keys(entry.triggerOn)) {
-        if (!entry.triggers.includes(word)) {
-            delete entry.triggerOn[word];
-        }
-    }
-}
-
-function entryTriggerStates(entry) {
-    return (entry.triggers || []).map((word) => ({
-        word,
-        on: entry.triggerOn?.[word] !== false,
-    }));
-}
-
 function isTagEnabledForEntry(entry, word) {
     return entry.triggerOn?.[word] !== false;
 }
@@ -1064,7 +1052,8 @@ class GridLoraLoaderUI {
         if (!item?.path || !el || (item.triggers && item.triggers.length)) {
             return;
         }
-        const triggers = await fetchLoraTriggers(item.path);
+        const data = await fetchLoraTriggerVariants(item.path);
+        const triggers = data.default || [];
         if (!triggers.length) {
             return;
         }
@@ -1082,25 +1071,22 @@ class GridLoraLoaderUI {
             return;
         }
 
-        this.selected.set(loraPath, {
+        const entry = createEmptyTriggerEntry({
             on: true,
             lora: loraPath,
             name: loraName,
             strength: 1.0,
-            triggers: item.triggers || [],
-            triggerOn: {},
         });
-        initEntryTriggers(this.selected.get(loraPath), item.triggers || []);
-        if (!item.triggers?.length) {
-            fetchLoraTriggers(loraPath).then((triggers) => {
-                const entry = this.selected.get(loraPath);
-                if (!entry || !triggers.length) return;
-                initEntryTriggers(entry, triggers);
-                this.renderSelected();
-                this.renderTags();
-                this.syncWidgets();
-            });
-        }
+        initEntryTriggers(entry, item.triggers || []);
+        entry.defaultTriggers = item.triggers || [];
+        this.selected.set(loraPath, entry);
+
+        loadEntryTriggerData(entry).then(() => {
+            if (!this.selected.has(loraPath)) return;
+            this.renderSelected();
+            this.renderTags();
+            this.syncWidgets();
+        });
 
         this.syncWidgets();
         this.renderSelected();
@@ -1143,15 +1129,15 @@ class GridLoraLoaderUI {
         el.innerHTML = `
             <img alt="" loading="lazy" />
             <span class="strength-badge" title="LoRA strength">${formatStrength(entry.strength)}</span>
-            <button class="cog-btn" title="Set strength">⚙</button>
-            <div class="item-label" title="${formatTriggers(entry.triggers) || entry.lora}">${entry.name || entry.lora.split("/").pop()}</div>
+            <button class="cog-btn" title="LoRA settings">⚙</button>
+            <div class="item-label" title="${formatTriggers(formatEnabledTriggers(entry)) || entry.lora}">${entry.name || entry.lora.split("/").pop()}</div>
         `;
 
         bindPreviewImage(el.querySelector("img"), entry.lora, replaceWithPreviewPlaceholder);
 
         el.querySelector(".cog-btn").addEventListener("click", (e) => {
             e.stopPropagation();
-            this.promptStrength(entry, e);
+            this.openSettings(entry);
         });
         el.querySelector(".cog-btn").addEventListener("pointerdown", (e) => e.stopPropagation());
 
@@ -1276,21 +1262,15 @@ class GridLoraLoaderUI {
         }
     }
 
-    promptStrength(entry, event) {
-        app.canvas.prompt(
-            "LoRA Strength",
-            entry.strength,
-            (value) => {
-                const num = Number(value);
-                if (!Number.isNaN(num)) {
-                    entry.strength = num;
-                    this.syncWidgets();
-                    this.renderSelected();
-                    this.node.setDirtyCanvas(true, true);
-                }
+    openSettings(entry) {
+        new LoraEntrySettingsDialog(entry, {
+            onApply: () => {
+                this.syncWidgets();
+                this.renderSelected();
+                this.renderTags();
+                this.node.setDirtyCanvas(true, true);
             },
-            event
-        );
+        }).open();
     }
 
     syncWidgets() {
@@ -1312,6 +1292,7 @@ class GridLoraLoaderUI {
                     lora: entry.lora,
                     strength: entry.strength,
                     triggerStates: entryTriggerStates(entry),
+                    variantStates: entryVariantStates(entry),
                 })
             );
         }
@@ -1321,7 +1302,7 @@ class GridLoraLoaderUI {
 
     async refreshSelectedTriggers() {
         const tasks = [...this.selected.values()].map(async (entry) => {
-            initEntryTriggers(entry, await fetchLoraTriggers(entry.lora));
+            await loadEntryTriggerData(entry);
         });
         await Promise.all(tasks);
         this.renderSelected();
@@ -1334,22 +1315,13 @@ class GridLoraLoaderUI {
         for (const value of widgetValues || []) {
             if (value && typeof value === "object" && value.lora) {
                 const name = value.lora.split("/").pop().replace(/\.[^.]+$/, "");
-                const entry = {
+                const entry = createEmptyTriggerEntry({
                     on: value.on !== false,
                     lora: value.lora,
                     name,
                     strength: value.strength ?? 1.0,
-                    triggers: [],
-                    triggerOn: {},
-                };
-                if (Array.isArray(value.triggerStates)) {
-                    entry.triggers = value.triggerStates.map((item) => item.word).filter(Boolean);
-                    entry.triggerOn = Object.fromEntries(
-                        value.triggerStates
-                            .filter((item) => item?.word)
-                            .map((item) => [item.word, item.on !== false])
-                    );
-                }
+                });
+                restoreTriggerEntryFromWidget(entry, value);
                 this.selected.set(value.lora, entry);
             }
         }

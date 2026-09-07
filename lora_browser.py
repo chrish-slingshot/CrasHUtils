@@ -12,6 +12,7 @@ from .nodes.lora_utils import (
     _resolve_lora_full_path,
     find_lora_preview_path,
     get_lora_triggers,
+    get_lora_trigger_variants,
     lora_has_preview,
     normalize_lora_path,
 )
@@ -348,6 +349,11 @@ def register_routes(routes):
     async def lora_triggers(request):
         path = normalize_lora_path(request.rel_url.query.get("path", ""))
         return web.json_response({"triggers": get_lora_triggers(path)})
+
+    @routes.get("/crashutils/loras/trigger-variants")
+    async def lora_trigger_variants(request):
+        path = normalize_lora_path(request.rel_url.query.get("path", ""))
+        return web.json_response(get_lora_trigger_variants(path))
 
     @routes.get("/crashutils/loras/info")
     async def lora_info(request):

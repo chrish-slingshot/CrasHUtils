@@ -320,6 +320,20 @@ export async function fetchLoraTriggers(loraPath) {
     }
 }
 
+export async function fetchLoraTriggerVariants(loraPath) {
+    if (!loraPath) return { default: [], variants: [] };
+    try {
+        const res = await fetch(`${INFO_API}/trigger-variants?path=${encodeURIComponent(loraPath)}`);
+        const data = await res.json();
+        return {
+            default: data.default || [],
+            variants: data.variants || [],
+        };
+    } catch {
+        return { default: [], variants: [] };
+    }
+}
+
 export function showLoraInfoDialog(loraPath) {
     if (!loraPath) return;
     new LoraInfoDialog(loraPath).open();

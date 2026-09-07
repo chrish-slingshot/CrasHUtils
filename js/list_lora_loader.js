@@ -1,6 +1,16 @@
 import { app } from "../../scripts/app.js";
-import { bindLoraContextMenu, fetchLoraTriggers } from "./lora_info.js";
+import { bindLoraContextMenu, fetchLoraTriggerVariants } from "./lora_info.js";
 import { bindPreviewImage, replaceWithPreviewPlaceholder } from "./lora_preview_cache.js";
+import {
+    createEmptyTriggerEntry,
+    entryTriggerStates,
+    entryVariantStates,
+    formatEnabledTriggers,
+    initEntryTriggers,
+    loadEntryTriggerData,
+    LoraEntrySettingsDialog,
+    restoreTriggerEntryFromWidget,
+} from "./lora_loader_settings.js";
 
 const NODE_NAME = "ListLoraLoader";
 const API_BASE = "/crashutils/loras";
@@ -787,7 +797,8 @@ class ListLoraLoaderUI {
         if (!item?.path || !tagsEl || (item.triggers && item.triggers.length)) {
             return;
         }
-        const triggers = await fetchLoraTriggers(item.path);
+        const data = await fetchLoraTriggerVariants(item.path);
+        const triggers = data.default || [];
         if (!triggers.length) {
             return;
         }
@@ -804,21 +815,21 @@ class ListLoraLoaderUI {
             return;
         }
 
-        this.selected.set(loraPath, {
+        const entry = createEmptyTriggerEntry({
             on: true,
             lora: loraPath,
             name: item.name,
             strength: 1.0,
-            triggers: item.triggers || [],
         });
-        if (!item.triggers?.length) {
-            fetchLoraTriggers(loraPath).then((triggers) => {
-                const entry = this.selected.get(loraPath);
-                if (!entry || !triggers.length) return;
-                entry.triggers = triggers;
-                this.renderSelected();
-            });
-        }
+        initEntryTriggers(entry, item.triggers || []);
+        entry.defaultTriggers = item.triggers || [];
+        this.selected.set(loraPath, entry);
+
+        loadEntryTriggerData(entry).then(() => {
+            if (!this.selected.has(loraPath)) return;
+            this.renderSelected();
+            this.syncWidgets();
+        });
 
         this.syncWidgets();
         this.renderSelected();
@@ -856,7 +867,7 @@ class ListLoraLoaderUI {
             el.classList.add("disabled");
         }
 
-        const tags = formatTriggers(entry.triggers);
+        const tags = formatTriggers(formatEnabledTriggers(entry));
         const tagsHtml = tags
             ? `<div class="row-tags" title="${escapeHtml(tags)}">${escapeHtml(tags)}</div>`
             : `<div class="row-tags empty"></div>`;
@@ -870,12 +881,12 @@ class ListLoraLoaderUI {
                 <div class="row-name" title="${escapeHtml(entry.lora)}">${escapeHtml(entry.name || entry.lora.split("/").pop())}</div>
                 ${tagsHtml}
             </div>
-            <button class="cog-btn" title="Set strength">⚙</button>
+            <button class="cog-btn" title="LoRA settings">⚙</button>
         `;
 
         el.querySelector(".cog-btn").addEventListener("click", (e) => {
             e.stopPropagation();
-            this.promptStrength(entry, e);
+            this.openSettings(entry);
         });
         el.querySelector(".cog-btn").addEventListener("pointerdown", (e) => e.stopPropagation());
 
@@ -925,21 +936,14 @@ class ListLoraLoaderUI {
         return el;
     }
 
-    promptStrength(entry, event) {
-        app.canvas.prompt(
-            "LoRA Strength",
-            entry.strength,
-            (value) => {
-                const num = Number(value);
-                if (!Number.isNaN(num)) {
-                    entry.strength = num;
-                    this.syncWidgets();
-                    this.renderSelected();
-                    this.node.setDirtyCanvas(true, true);
-                }
+    openSettings(entry) {
+        new LoraEntrySettingsDialog(entry, {
+            onApply: () => {
+                this.syncWidgets();
+                this.renderSelected();
+                this.node.setDirtyCanvas(true, true);
             },
-            event
-        );
+        }).open();
     }
 
     syncWidgets() {
@@ -958,6 +962,8 @@ class ListLoraLoaderUI {
                     on: entry.on,
                     lora: entry.lora,
                     strength: entry.strength,
+                    triggerStates: entryTriggerStates(entry),
+                    variantStates: entryVariantStates(entry),
                 })
             );
         }
@@ -967,10 +973,11 @@ class ListLoraLoaderUI {
 
     async refreshSelectedTriggers() {
         const tasks = [...this.selected.values()].map(async (entry) => {
-            entry.triggers = await fetchLoraTriggers(entry.lora);
+            await loadEntryTriggerData(entry);
         });
         await Promise.all(tasks);
         this.renderSelected();
+        this.syncWidgets();
     }
 
     loadFromWidgetValues(widgetValues, properties) {
@@ -978,13 +985,14 @@ class ListLoraLoaderUI {
         for (const value of widgetValues || []) {
             if (value && typeof value === "object" && value.lora) {
                 const name = value.lora.split("/").pop().replace(/\.[^.]+$/, "");
-                this.selected.set(value.lora, {
+                const entry = createEmptyTriggerEntry({
                     on: value.on !== false,
                     lora: value.lora,
                     name,
                     strength: value.strength ?? 1.0,
-                    triggers: [],
                 });
+                restoreTriggerEntryFromWidget(entry, value);
+                this.selected.set(value.lora, entry);
             }
         }
         this.loadFromProperties(properties ?? this.node.properties);

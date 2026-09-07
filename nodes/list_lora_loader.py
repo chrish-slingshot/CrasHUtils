@@ -14,7 +14,8 @@ class ListLoraLoader(GridLoraLoader):
         "Visual LoRA loader with folder browser and vertical list view. "
         "Each LoRA shows a thumbnail, name, and trigger keywords. "
         "Select multiple LoRAs, toggle each individually, and set per-LoRA strength. "
-        "Outputs trigger keywords from companion .txt files (same name as the LoRA)."
+        "Outputs trigger keywords from the primary .txt file plus optional variant .txt files "
+        "(e.g. lora1.Character Name.txt) selected in the LoRA settings dialog."
     )
 
     @classmethod

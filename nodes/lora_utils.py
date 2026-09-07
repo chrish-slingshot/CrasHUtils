@@ -178,20 +178,93 @@ def _read_rgthree_triggers(full_path: str) -> list[str]:
     return _dedupe_terms(terms)
 
 
+def _lora_stem_from_full_path(full_path: str) -> str:
+    return os.path.splitext(os.path.basename(full_path))[0]
+
+
+def _find_variant_trigger_files(full_path: str) -> list[dict]:
+    """Find variant trigger files named like lora1.Character Name.txt alongside the LoRA."""
+    if not full_path or not os.path.isfile(full_path):
+        return []
+
+    directory = os.path.dirname(full_path)
+    stem = _lora_stem_from_full_path(full_path)
+    prefix = f"{stem}."
+    variants: list[dict] = []
+
+    try:
+        for entry in os.scandir(directory):
+            if not entry.is_file():
+                continue
+            if not entry.name.lower().endswith(".txt"):
+                continue
+            name_no_ext = os.path.splitext(entry.name)[0]
+            if not name_no_ext.casefold().startswith(prefix.casefold()):
+                continue
+            variant_name = name_no_ext[len(stem) + 1 :]
+            if not variant_name:
+                continue
+            variants.append(
+                {
+                    "id": variant_name,
+                    "label": variant_name,
+                    "path": entry.path,
+                }
+            )
+    except OSError:
+        pass
+
+    variants.sort(key=lambda item: item["label"].casefold())
+    return variants
+
+
+def _read_triggers_from_txt_path(txt_path: str) -> list[str]:
+    if not txt_path or not os.path.isfile(txt_path):
+        return []
+    content = _read_text_file(txt_path)
+    if content is None:
+        return []
+    return parse_trigger_content(content)
+
+
 def get_lora_triggers_from_full_path(full_path: str) -> list[str]:
-    """Read trigger keywords using a known on-disk LoRA path."""
+    """Read default trigger keywords using a known on-disk LoRA path."""
     if not full_path or not os.path.isfile(full_path):
         return []
 
     txt_path = _find_trigger_txt_path(full_path)
     if txt_path is not None:
-        content = _read_text_file(txt_path)
-        if content is not None:
-            terms = parse_trigger_content(content)
-            if terms:
-                return terms
+        terms = _read_triggers_from_txt_path(txt_path)
+        if terms:
+            return terms
 
     return _read_rgthree_triggers(full_path)
+
+
+def get_lora_variant_triggers_from_full_path(full_path: str, variant_id: str) -> list[str]:
+    if not full_path or not variant_id:
+        return []
+
+    for variant in _find_variant_trigger_files(full_path):
+        if variant["id"].casefold() == str(variant_id).casefold():
+            return _read_triggers_from_txt_path(variant["path"])
+    return []
+
+
+def get_lora_trigger_variants_from_full_path(full_path: str) -> dict:
+    """Return default triggers and optional variant trigger files for a LoRA."""
+    default = get_lora_triggers_from_full_path(full_path) if full_path else []
+    variants = []
+    for variant in _find_variant_trigger_files(full_path):
+        triggers = _read_triggers_from_txt_path(variant["path"])
+        variants.append(
+            {
+                "id": variant["id"],
+                "label": variant["label"],
+                "triggers": triggers,
+            }
+        )
+    return {"default": default, "variants": variants}
 
 
 def get_lora_by_filename(file_path: str, lora_paths=None) -> str | None:
@@ -241,7 +314,7 @@ def lora_has_preview(lora_relative_path: str, *, full_path: str | None = None) -
 
 
 def get_lora_triggers(lora_relative_path: str = "", *, full_path: str | None = None) -> list[str]:
-    """Read trigger keywords from a companion .txt file alongside the LoRA."""
+    """Read default trigger keywords from the primary companion .txt file alongside the LoRA."""
     if full_path and os.path.isfile(full_path):
         return get_lora_triggers_from_full_path(full_path)
 
@@ -253,3 +326,18 @@ def get_lora_triggers(lora_relative_path: str = "", *, full_path: str | None = N
         return []
 
     return get_lora_triggers_from_full_path(resolved)
+
+
+def get_lora_trigger_variants(lora_relative_path: str = "", *, full_path: str | None = None) -> dict:
+    """Read default and variant trigger keyword files for a LoRA."""
+    if full_path and os.path.isfile(full_path):
+        return get_lora_trigger_variants_from_full_path(full_path)
+
+    if not lora_relative_path:
+        return {"default": [], "variants": []}
+
+    resolved = _resolve_lora_full_path(lora_relative_path)
+    if resolved is None:
+        return {"default": [], "variants": []}
+
+    return get_lora_trigger_variants_from_full_path(resolved)
